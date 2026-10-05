@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+
+  vars_files:
+    - ../../vars/main.yml
+
+  roles:
+    - user_management
+    - ssh_hardening
+    - workdir

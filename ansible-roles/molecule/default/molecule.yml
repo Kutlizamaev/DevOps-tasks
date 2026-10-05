@@ -1,0 +1,22 @@
+---
+driver:
+  name: docker
+
+platforms:
+  - name: molecule-ubuntu
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    pre_build_image: true
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    override_command: false
+
+ansible:
+  cfg:
+    defaults:
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/roles
+      deprecation_warnings: false
+
+verifier:
+  name: ansible

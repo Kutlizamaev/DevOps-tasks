@@ -1,0 +1,13 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - openssh-server
+          - sudo
+        state: present
+        update_cache: true

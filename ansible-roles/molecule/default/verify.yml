@@ -1,0 +1,66 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+
+  vars_files:
+    - ../../vars/main.yml
+
+  tasks:
+    - name: Get user information
+      ansible.builtin.getent:
+        database: passwd
+        key: '{{ item.name }}'
+      loop: '{{ managed_users }}'
+
+    - name: Check sudoers files
+      ansible.builtin.stat:
+        path: '/etc/sudoers.d/{{ item.name }}'
+      register: sudoers_files
+      loop: '{{ managed_users }}'
+
+    - name: Verify sudoers files
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.mode == "0440"
+      loop: '{{ sudoers_files.results }}'
+
+    - name: Check authorized_keys
+      ansible.builtin.stat:
+        path: '/home/{{ item.name }}/.ssh/authorized_keys'
+      register: authorized_keys_files
+      loop: '{{ managed_users }}'
+
+    - name: Verify authorized_keys
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+      loop: '{{ authorized_keys_files.results }}'
+
+    - name: Check work directories
+      ansible.builtin.stat:
+        path: '{{ item.workdir }}'
+      register: workdirs
+      loop: '{{ managed_users }}'
+
+    - name: Verify work directories
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+          - item.stat.mode == "0660"
+          - item.stat.pw_name == item.item.name
+          - item.stat.gr_name == item.item.name
+      loop: '{{ workdirs.results }}'
+
+    - name: Check effective SSH configuration
+      ansible.builtin.command:
+        cmd: sshd -T
+      register: sshd_config
+      changed_when: false
+
+    - name: Verify password authentication is disabled
+      ansible.builtin.assert:
+        that:
+          - "'passwordauthentication no' in sshd_config.stdout"

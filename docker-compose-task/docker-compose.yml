@@ -1,0 +1,59 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: dev_web
+
+    ports:
+      - '8080:80'
+
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./web:/usr/share/nginx/html:ro
+
+    networks:
+      - dev_network
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: dev_db_container
+
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: app_password
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      dev_network:
+        aliases:
+          - new_db
+          - dev_db
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U appuser -d appdb
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+    restart: unless-stopped
+
+networks:
+  dev_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.10.0/28
+
+volumes:
+  postgres_data:

@@ -1,0 +1,9 @@
+---
+- name: Create user work directories
+  ansible.builtin.file:
+    path: '{{ item.workdir }}'
+    state: directory
+    owner: '{{ item.name }}'
+    group: '{{ item.name }}'
+    mode: '0660'
+  loop: '{{ managed_users }}'

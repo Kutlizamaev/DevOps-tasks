@@ -1,0 +1,5 @@
+---
+managed_users:
+  - name: ansiblerole
+    public_key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIQLL7cDNSYAdvucQdXzGN0Ify4jFlCOObDC7g41xQu+ devops@devops-ubuntu'
+    workdir: /opt/ansiblerole_workdir

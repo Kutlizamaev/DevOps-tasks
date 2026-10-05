@@ -1,0 +1,52 @@
+---
+- name: Configure remote server
+  hosts: target
+  become: true
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Create user
+      ansible.builtin.user:
+        name: '{{ new_user }}'
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Configure sudo without password
+      ansible.builtin.copy:
+        dest: '/etc/sudoers.d/{{ new_user }}'
+        content: "{{ new_user }} ALL=(ALL:ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
+        validate: '/usr/sbin/visudo -cf %s'
+
+    - name: Add SSH public key
+      ansible.posix.authorized_key:
+        user: '{{ new_user }}'
+        key: '{{ ssh_public_key }}'
+        state: present
+
+    - name: Disable SSH password authentication
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        backup: true
+      notify: Restart SSH
+
+    - name: Create work directory
+      ansible.builtin.file:
+        path: '{{ user_workdir }}'
+        state: directory
+        owner: '{{ new_user }}'
+        group: '{{ new_user }}'
+        mode: '0660'
+
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
