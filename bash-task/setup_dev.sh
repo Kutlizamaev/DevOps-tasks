@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -Eeuo pipefail
 
 LOG_FILE="/var/log/dev_setup.log"
